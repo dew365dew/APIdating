@@ -39,6 +39,55 @@ app.get('/', (req, res) => {
 })
 
 
+app.post('/register', async (req, res) => {
+  const { email, password, phone, name, province } = req.body
+
+  // สมัคร auth
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
+  })
+
+  if (error) {
+    return res.status(400).json(error)
+  }
+
+  // สร้าง profile
+  const { error: profileError } = await supabase
+    .from('users')
+    .insert([{
+      id: data.user.id,
+      phone,
+      name,
+      province
+    }])
+
+  if (profileError) {
+    return res.status(400).json(profileError)
+  }
+
+  res.json({
+    message: 'register success',
+    user: data.user
+  })
+})
+
+ // login   email, password  A
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  })
+
+  if (error) {
+    return res.status(400).json(error)
+  }
+
+  res.json(data)
+})
+
 // ==========================
 // 👤 CREATE USER PROFILE
 // ==========================
@@ -87,6 +136,9 @@ app.get('/users', async (req, res) => {
 
   res.json(data)
 })
+
+
+
 
 
 // ==========================
