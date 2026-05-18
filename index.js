@@ -59,7 +59,7 @@ app.get('/', (req, res) => {
 
 app.post('/register', async (req, res) => {
   const { email, password, phone, name, province } = req.body
-
+console.log(req.body)
   // สมัคร auth
   const { data, error } = await supabase.auth.signUp({
     email,
