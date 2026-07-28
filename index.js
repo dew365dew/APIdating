@@ -274,7 +274,15 @@ app.get('/test-db', async (req, res) => {
 
   res.json(data);
 });
-
+// ==========================
+// 💬 test  datababse ENV.
+// ==========================
+app.get('/env', (req, res) => {
+  res.json({
+    url: process.env.SUPABASE_URL,
+    keyExists: !!process.env.SUPABASE_KEY
+  })
+})
 
 
 
