@@ -259,6 +259,26 @@ app.get('/messages/:match_id', async (req, res) => {
 
 
 // ==========================
+// 💬 GET USERS
+// ==========================
+
+app.get('/test-db', async (req, res) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .limit(5);
+
+  if (error) {
+    return res.status(400).json(error);
+  }
+
+  res.json(data);
+});
+
+
+
+
+// ==========================
 // 🚀 START
 // ==========================
 const PORT = process.env.PORT || 3000
