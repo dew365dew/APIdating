@@ -261,18 +261,16 @@ app.get('/messages/:match_id', async (req, res) => {
 // ==========================
 // 💬 GET USERS
 // ==========================
-
-app.get('/test-db', async (req, res) => {
-  const { data, error } = await supabase
+app.get('/health', async (req, res) => {
+  const { count, error } = await supabase
     .from('users')
-    .select('*')
-    .limit(5);
+    .select('*', { count: 'exact', head: true });
 
-  if (error) {
-    return res.status(400).json(error);
-  }
-
-  res.json(data);
+  res.json({
+    connected: !error,
+    count,
+    error
+  });
 });
 // ==========================
 // 💬 test  datababse ENV.
