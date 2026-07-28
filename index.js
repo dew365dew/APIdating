@@ -272,6 +272,15 @@ app.get('/health', async (req, res) => {
     error
   });
 });
+app.get('/test-auth', async (req, res) => {
+  const { data, error } = await supabase.auth.admin.listUsers();
+
+  res.json({
+    error,
+    total: data?.users?.length,
+    users: data?.users
+  });
+});
 // ==========================
 // 💬 test  datababse ENV.
 // ==========================
