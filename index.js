@@ -147,49 +147,57 @@ app.post('/users', async (req, res) => {
 // ==========================
 // 🔍 GET USERS (feed)
 // ==========================
+// ==========================
+// 🔍 GET USERS (feed)
+// ==========================
 app.get('/users', async (req, res) => {
   const user = await getUser(req)
 
-  if (!user)
+  if (!user) {
     return res.status(401).json({ error: 'Unauthorized' })
+  }
 
   const { province } = req.query
 
   let query = supabase
     .from('users')
-    .select('*')
+    .select(`
+      *,
+      photos (
+        url
+      )
+    `)
 
   if (province) {
     query = query.eq('province', province)
   }
 
+  // ไม่เอาตัวเอง
   query = query.neq('id', user.id)
 
-  const { data: users, error } = await query
+  const { data, error } = await query
 
-  if (error)
+  if (error) {
     return res.status(400).json(error)
-
-  const result = []
-
-  for (const u of users) {
-
-    const { data: photo } = await supabase
-      .from('photos')
-      .select('url')
-      .eq('user_id', u.id)
-      .limit(1)
-      .maybeSingle()
-
-    result.push({
-      ...u,
-      photo_url: photo?.url ?? null
-    })
   }
+
+  const result = data.map((u) => ({
+    id: u.id,
+    phone: u.phone,
+    name: u.name,
+    age: u.age,
+    gender: u.gender,
+    province: u.province,
+    bio: u.bio,
+    created_at: u.created_at,
+    photo_url:
+      u.photos && u.photos.length > 0
+        ? u.photos[0].url
+        : null
+  }))
 
   res.json(result)
 })
-
 
 
 
