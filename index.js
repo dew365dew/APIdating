@@ -149,24 +149,45 @@ app.post('/users', async (req, res) => {
 // ==========================
 app.get('/users', async (req, res) => {
   const user = await getUser(req)
-  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+
+  if (!user)
+    return res.status(401).json({ error: 'Unauthorized' })
 
   const { province } = req.query
 
-  let query = supabase.from('users').select('*')
+  let query = supabase
+    .from('users')
+    .select('*')
 
   if (province) {
     query = query.eq('province', province)
   }
 
-  // ❗ ตัดตัวเองออก
   query = query.neq('id', user.id)
 
-  const { data, error } = await query
+  const { data: users, error } = await query
 
-  if (error) return res.status(400).json(error)
+  if (error)
+    return res.status(400).json(error)
 
-  res.json(data)
+  const result = []
+
+  for (const u of users) {
+
+    const { data: photo } = await supabase
+      .from('photos')
+      .select('url')
+      .eq('user_id', u.id)
+      .limit(1)
+      .maybeSingle()
+
+    result.push({
+      ...u,
+      photo_url: photo?.url ?? null
+    })
+  }
+
+  res.json(result)
 })
 
 
