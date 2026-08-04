@@ -104,6 +104,66 @@ app.post("/upload-photo", upload.single("photo"), async (req, res) => {
     photo_url: data.publicUrl,
   });
 });
+
+
+// ==========================
+// 📌API photo ดู รูปให้ Users คนใดคนหนึ่ง
+// ==========================
+app.get("/user/:id", async (req, res) => {
+
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      *,
+      photos(
+        url
+      )
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error)
+    return res.status(400).json(error);
+
+  res.json({
+    id: data.id,
+    phone: data.phone,
+    name: data.name,
+    age: data.age,
+    gender: data.gender,
+    province: data.province,
+    bio: data.bio,
+    created_at: data.created_at,
+    photo_url:
+      data.photos.length > 0
+        ? data.photos[0].url
+        : null,
+  });
+
+});
+///// API ลบรูป ของ  users นั้น
+app.delete("/photo", async (req, res) => {
+
+  const user = await getUser(req);
+
+  if (!user)
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+
+  await supabase
+    .from("photos")
+    .delete()
+    .eq("user_id", user.id);
+
+  res.json({
+    success: true,
+  });
+
+});
+
 /////////////////////////////////////////
 app.post('/register', async (req, res) => {
   try {
@@ -153,6 +213,8 @@ app.post('/register', async (req, res) => {
   }
 })
 
+
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body
 
@@ -192,9 +254,7 @@ app.post('/users', async (req, res) => {
 })
 
 
-// ==========================
-// 🔍 GET USERS (feed)
-// ==========================
+
 // ==========================
 // 🔍 GET USERS (feed)
 // ==========================
@@ -403,6 +463,7 @@ app.put("/profile", async (req, res) => {
 // 💬 API ดูโปรไฟล์ตัวเอง
 // ==========================
 app.get("/profile", async (req, res) => {
+
   const user = await getUser(req);
 
   if (!user)
@@ -414,7 +475,9 @@ app.get("/profile", async (req, res) => {
     .from("users")
     .select(`
       *,
-      photos(url)
+      photos(
+        url
+      )
     `)
     .eq("id", user.id)
     .single();
@@ -422,9 +485,22 @@ app.get("/profile", async (req, res) => {
   if (error)
     return res.status(400).json(error);
 
-  res.json(data);
-});
+  res.json({
+    id: data.id,
+    phone: data.phone,
+    name: data.name,
+    age: data.age,
+    gender: data.gender,
+    province: data.province,
+    bio: data.bio,
+    created_at: data.created_at,
+    photo_url:
+      data.photos.length > 0
+        ? data.photos[0].url
+        : null,
+  });
 
+})
 
 
 
