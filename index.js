@@ -310,6 +310,76 @@ app.get('/test-auth', async (req, res) => {
     users: data?.users
   });
 });
+
+
+// ==========================
+// 💬 แก้ไข ข้อมูล User PUT  Profile USERS
+// ==========================
+app.put("/profile", async (req, res) => {
+  const user = await getUser(req);
+
+  if (!user)
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+
+  const {
+    name,
+    age,
+    gender,
+    province,
+    bio,
+  } = req.body;
+
+  const { data, error } = await supabase
+    .from("users")
+    .update({
+      name,
+      age,
+      gender,
+      province,
+      bio,
+    })
+    .eq("id", user.id)
+    .select()
+    .single();
+
+  if (error)
+    return res.status(400).json(error);
+
+  res.json(data);
+});
+
+
+// ==========================
+// 💬 API ดูโปรไฟล์ตัวเอง
+// ==========================
+app.get("/profile", async (req, res) => {
+  const user = await getUser(req);
+
+  if (!user)
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      *,
+      photos(url)
+    `)
+    .eq("id", user.id)
+    .single();
+
+  if (error)
+    return res.status(400).json(error);
+
+  res.json(data);
+});
+
+
+
+
 // ==========================
 // 💬 test  datababse ENV.
 // ==========================
