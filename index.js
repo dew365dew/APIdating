@@ -77,13 +77,13 @@ app.post("/photo", async (req, res) => {
   const { url } = req.body;
 
   const { data, error } = await supabase
-    .from("user-photos")
-    .insert({
-      user_id: user.id,
-      url: url,
-    })
-    .select()
-    .single();
+  .from("photos")
+  .insert({
+    user_id: user.id,
+    url,
+  })
+  .select()
+  .single();
 
   if (error)
     return res.status(400).json(error);
