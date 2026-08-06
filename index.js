@@ -77,7 +77,7 @@ app.post("/photo", async (req, res) => {
   const { url } = req.body;
 
   const { data, error } = await supabase
-    .from("photos")
+    .from("user-photos")
     .insert({
       user_id: user.id,
       url: url,
