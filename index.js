@@ -350,21 +350,58 @@ app.get('/users', async (req, res) => {
 // ==========================
 // 👉 SWIPE
 // ==========================
+
 app.post('/swipe', async (req, res) => {
+
   const user = await getUser(req)
-  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+
+  if (!user) {
+    return res.status(401).json({
+      error: 'Unauthorized'
+    })
+  }
 
   const { target_user_id, action } = req.body
 
+  if (!target_user_id) {
+    return res.status(400).json({
+      error: 'target_user_id is required'
+    })
+  }
+
+  if (!['like', 'dislike'].includes(action)) {
+    return res.status(400).json({
+      error: 'Invalid action'
+    })
+  }
+
+  // ตรวจว่า target ไม่ใช่ตัวเอง
+  if (target_user_id === user.id) {
+    return res.status(400).json({
+      error: 'Cannot swipe yourself'
+    })
+  }
+
   const { data, error } = await supabase
     .from('swipes')
-    .insert([{
-      user_id: user.id,
-      target_user_id,
-      action
-    }])
+    .upsert(
+      {
+        user_id: user.id,
+        target_user_id,
+        action
+      },
+      {
+        onConflict: 'user_id,target_user_id'
+      }
+    )
+    .select()
+    .single()
 
-  if (error) return res.status(400).json(error)
+  if (error) {
+    console.error('SWIPE ERROR:', error)
+
+    return res.status(400).json(error)
+  }
 
   res.json(data)
 })
