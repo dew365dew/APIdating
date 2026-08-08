@@ -244,15 +244,44 @@ app.post('/users', async (req, res) => {
 // ==========================
 // 🔍 GET USERS (feed)
 // ==========================
+// ==========================
+// 🔍 GET USERS (feed)
+// ==========================
 app.get('/users', async (req, res) => {
+
   const user = await getUser(req)
 
   if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' })
+    return res.status(401).json({
+      error: 'Unauthorized'
+    })
   }
 
   const { province } = req.query
 
+  // --------------------------
+  // 1. ดึงคนที่เราเคย swipe
+  // --------------------------
+  const {
+    data: swipedUsers,
+    error: swipeError
+  } = await supabase
+    .from('swipes')
+    .select('target_user_id')
+    .eq('user_id', user.id)
+
+  if (swipeError) {
+    return res.status(400).json(swipeError)
+  }
+
+  const swipedIds =
+    swipedUsers?.map(
+      item => item.target_user_id
+    ) ?? []
+
+  // --------------------------
+  // 2. ดึง users
+  // --------------------------
   let query = supabase
     .from('users')
     .select(`
@@ -262,6 +291,7 @@ app.get('/users', async (req, res) => {
       )
     `)
 
+  // จังหวัด
   if (province) {
     query = query.eq('province', province)
   }
@@ -269,12 +299,31 @@ app.get('/users', async (req, res) => {
   // ไม่เอาตัวเอง
   query = query.neq('id', user.id)
 
-  const { data, error } = await query
+  // --------------------------
+  // 3. ไม่เอาคนที่เคย swipe
+  // --------------------------
+  if (swipedIds.length > 0) {
+    query = query.not(
+      'id',
+      'in',
+      `(${swipedIds.join(',')})`
+    )
+  }
+
+  const {
+    data,
+    error
+  } = await query
 
   if (error) {
+    console.error('GET USERS ERROR:', error)
+
     return res.status(400).json(error)
   }
 
+  // --------------------------
+  // 4. Format response
+  // --------------------------
   const result = data.map((u) => ({
     id: u.id,
     phone: u.phone,
@@ -284,8 +333,10 @@ app.get('/users', async (req, res) => {
     province: u.province,
     bio: u.bio,
     created_at: u.created_at,
+
     photo_url:
-      u.photos && u.photos.length > 0
+      u.photos &&
+      u.photos.length > 0
         ? u.photos[0].url
         : null
   }))
